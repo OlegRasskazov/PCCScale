@@ -34,7 +34,9 @@
 
 typedef struct{
   uint16_t  Lcs1SvcHdle;                  /**< Lcs1 Service Handle */
-  uint16_t  LcdataCharHdle;                  /**< LCDATA Characteristic Handle */
+  uint16_t  WeightCharHdle;                  /**< WEIGHT Characteristic Handle */
+  uint16_t  CommandCharHdle;                  /**< COMMAND Characteristic Handle */
+  uint16_t  StatusCharHdle;                  /**< STATUS Characteristic Handle */
 /* USER CODE BEGIN Context */
   /* Place holder for Characteristic Descriptors Handle*/
 
@@ -69,7 +71,9 @@ typedef struct{
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-static const uint16_t SizeLcdata = 18;
+static const uint16_t SizeWeight = 4;
+static const uint16_t SizeCommand = 16;
+static const uint16_t SizeStatus = 8;
 
 static LCS1_Context_t LCS1_Context;
 
@@ -104,9 +108,13 @@ do {\
  generator:
  0000A001CC7A482A984A7F2ED5B3E58F: Service 128bits UUID
  0000A0028E2245419D4C21EDAE82ED19: Characteristic 128bits UUID
+ 0000A0038E2245419D4C21EDAE82ED19: Characteristic 128bits UUID
+ 0000A0048E2245419D4C21EDAE82ED19: Characteristic 128bits UUID
  */
 #define COPY_LCS1_UUID(uuid_struct)       COPY_UUID_128(uuid_struct,0x00,0x00,0xa0,0x01,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
-#define COPY_LCDATA_UUID(uuid_struct)       COPY_UUID_128(uuid_struct,0x00,0x00,0xa0,0x02,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_WEIGHT_UUID(uuid_struct)       COPY_UUID_128(uuid_struct,0x00,0x00,0xa0,0x02,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_COMMAND_UUID(uuid_struct)       COPY_UUID_128(uuid_struct,0x00,0x00,0xa0,0x03,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
+#define COPY_STATUS_UUID(uuid_struct)       COPY_UUID_128(uuid_struct,0x00,0x00,0xa0,0x04,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 
 /* USER CODE BEGIN PF */
 
@@ -147,7 +155,7 @@ static SVCCTL_EvtAckStatus_t LCS1_EventHandler(void *p_Event)
           notification.AttributeHandle          = p_attribute_modified->Attr_Handle;
           notification.DataTransfered.Length    = p_attribute_modified->Attr_Data_Length;
           notification.DataTransfered.p_Payload = p_attribute_modified->Attr_Data;
-          if(p_attribute_modified->Attr_Handle == (LCS1_Context.LcdataCharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          if(p_attribute_modified->Attr_Handle == (LCS1_Context.WeightCharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN Service1_Char_1 */
@@ -164,7 +172,7 @@ static SVCCTL_EvtAckStatus_t LCS1_EventHandler(void *p_Event)
                 /* USER CODE BEGIN Service1_Char_1_Disabled_BEGIN */
 
                 /* USER CODE END Service1_Char_1_Disabled_BEGIN */
-                notification.EvtOpcode = LCS1_LCDATA_NOTIFY_DISABLED_EVT;
+                notification.EvtOpcode = LCS1_WEIGHT_NOTIFY_DISABLED_EVT;
                 LCS1_Notification(&notification);
                 /* USER CODE BEGIN Service1_Char_1_Disabled_END */
 
@@ -176,7 +184,7 @@ static SVCCTL_EvtAckStatus_t LCS1_EventHandler(void *p_Event)
                 /* USER CODE BEGIN Service1_Char_1_COMSVC_Notification_BEGIN */
 
                 /* USER CODE END Service1_Char_1_COMSVC_Notification_BEGIN */
-                notification.EvtOpcode = LCS1_LCDATA_NOTIFY_ENABLED_EVT;
+                notification.EvtOpcode = LCS1_WEIGHT_NOTIFY_ENABLED_EVT;
                 LCS1_Notification(&notification);
                 /* USER CODE BEGIN Service1_Char_1_COMSVC_Notification_END */
 
@@ -189,6 +197,61 @@ static SVCCTL_EvtAckStatus_t LCS1_EventHandler(void *p_Event)
                 /* USER CODE END Service1_Char_1_default */
                 break;
             }
+          }
+
+          else if(p_attribute_modified->Attr_Handle == (LCS1_Context.StatusCharHdle + CHARACTERISTIC_DESCRIPTOR_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+            /* USER CODE BEGIN Service1_Char_3 */
+
+            /* USER CODE END Service1_Char_3 */
+            switch(p_attribute_modified->Attr_Data[0])
+            {
+              /* USER CODE BEGIN Service1_Char_3_attribute_modified */
+
+              /* USER CODE END Service1_Char_3_attribute_modified */
+
+              /* Disabled Notification management */
+              case (0x00):
+                /* USER CODE BEGIN Service1_Char_3_Disabled_BEGIN */
+
+                /* USER CODE END Service1_Char_3_Disabled_BEGIN */
+                notification.EvtOpcode = LCS1_STATUS_NOTIFY_DISABLED_EVT;
+                LCS1_Notification(&notification);
+                /* USER CODE BEGIN Service1_Char_3_Disabled_END */
+
+                /* USER CODE END Service1_Char_3_Disabled_END */
+                break;
+
+              /* Enabled Notification management */
+              case GATT_CHAR_UPDATE_SEND_NOTIFICATION:
+                /* USER CODE BEGIN Service1_Char_3_COMSVC_Notification_BEGIN */
+
+                /* USER CODE END Service1_Char_3_COMSVC_Notification_BEGIN */
+                notification.EvtOpcode = LCS1_STATUS_NOTIFY_ENABLED_EVT;
+                LCS1_Notification(&notification);
+                /* USER CODE BEGIN Service1_Char_3_COMSVC_Notification_END */
+
+                /* USER CODE END Service1_Char_3_COMSVC_Notification_END */
+                break;
+
+              default:
+                /* USER CODE BEGIN Service1_Char_3_default */
+
+                /* USER CODE END Service1_Char_3_default */
+                break;
+            }
+          }
+
+          else if(p_attribute_modified->Attr_Handle == (LCS1_Context.CommandCharHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))
+          {
+            return_value = SVCCTL_EvtAckFlowEnable;
+
+            notification.EvtOpcode = LCS1_COMMAND_WRITE_EVT;
+            /* USER CODE BEGIN Service1_Char_2_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+
+            /* USER CODE END Service1_Char_2_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+            LCS1_Notification(&notification);
           }
 
           /* USER CODE BEGIN EVT_BLUE_GATT_ATTRIBUTE_MODIFIED_END */
@@ -297,15 +360,18 @@ void LCS1_Init(void)
   /**
    * LCS1
    *
-   * Max_Attribute_Records = 1 + 2*1 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
+   * Max_Attribute_Records = 1 + 2*3 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
    * service_max_attribute_record = 1 for LCS1 +
-   *                                2 for LCDATA +
-   *                                1 for LCDATA configuration descriptor +
-   *                              = 4
+   *                                2 for WEIGHT +
+   *                                2 for COMMAND +
+   *                                2 for STATUS +
+   *                                1 for WEIGHT configuration descriptor +
+   *                                1 for STATUS configuration descriptor +
+   *                              = 9
    * This value doesn't take into account number of descriptors manually added
    * In case of descriptors added, please update the max_attr_record value accordingly in the next SVCCTL_InitService User Section
    */
-  max_attr_record = 4;
+  max_attr_record = 9;
 
   /* USER CODE BEGIN SVCCTL_InitService */
   /* max_attr_record to be updated if descriptors have been added */
@@ -332,32 +398,88 @@ void LCS1_Init(void)
   /* USER CODE END SVCCTL_InitService_2 */
 
   /**
-   * LCDATA
+   * WEIGHT
    */
-  COPY_LCDATA_UUID(uuid.Char_UUID_128);
+  COPY_WEIGHT_UUID(uuid.Char_UUID_128);
   ret = aci_gatt_add_char(LCS1_Context.Lcs1SvcHdle,
                           UUID_TYPE_128,
                           (Char_UUID_t *) &uuid,
-                          SizeLcdata,
+                          SizeWeight,
                           CHAR_PROP_NOTIFY,
                           ATTR_PERMISSION_NONE,
                           GATT_NOTIFY_ATTRIBUTE_WRITE,
                           0x10,
                           CHAR_VALUE_LEN_CONSTANT,
-                          &(LCS1_Context.LcdataCharHdle));
+                          &(LCS1_Context.WeightCharHdle));
   if (ret != BLE_STATUS_SUCCESS)
   {
-    LOG_INFO_BLE("  Fail   : aci_gatt_add_char command   : LCDATA, error code: 0x%02X\n", ret);
+    LOG_INFO_BLE("  Fail   : aci_gatt_add_char command   : WEIGHT, error code: 0x%02X\n", ret);
   }
   else
   {
-    LOG_INFO_BLE("  Success: aci_gatt_add_char command   : LcdataCharHdle = 0x%04X\n",LCS1_Context.LcdataCharHdle);
+    LOG_INFO_BLE("  Success: aci_gatt_add_char command   : WeightCharHdle = 0x%04X\n",LCS1_Context.WeightCharHdle);
   }
 
   /* USER CODE BEGIN SVCCTL_InitService1Char1 */
   /* Place holder for Characteristic Descriptors */
 
   /* USER CODE END SVCCTL_InitService1Char1 */
+
+  /**
+   * COMMAND
+   */
+  COPY_COMMAND_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(LCS1_Context.Lcs1SvcHdle,
+                          UUID_TYPE_128,
+                          (Char_UUID_t *) &uuid,
+                          SizeCommand,
+                          CHAR_PROP_WRITE,
+                          ATTR_PERMISSION_NONE,
+                          GATT_NOTIFY_ATTRIBUTE_WRITE,
+                          0x10,
+                          CHAR_VALUE_LEN_VARIABLE,
+                          &(LCS1_Context.CommandCharHdle));
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    LOG_INFO_BLE("  Fail   : aci_gatt_add_char command   : COMMAND, error code: 0x%02X\n", ret);
+  }
+  else
+  {
+    LOG_INFO_BLE("  Success: aci_gatt_add_char command   : CommandCharHdle = 0x%04X\n",LCS1_Context.CommandCharHdle);
+  }
+
+  /* USER CODE BEGIN SVCCTL_InitService1Char2 */
+  /* Place holder for Characteristic Descriptors */
+
+  /* USER CODE END SVCCTL_InitService1Char2 */
+
+  /**
+   * STATUS
+   */
+  COPY_STATUS_UUID(uuid.Char_UUID_128);
+  ret = aci_gatt_add_char(LCS1_Context.Lcs1SvcHdle,
+                          UUID_TYPE_128,
+                          (Char_UUID_t *) &uuid,
+                          SizeStatus,
+                          CHAR_PROP_READ | CHAR_PROP_NOTIFY,
+                          ATTR_PERMISSION_NONE,
+                          GATT_NOTIFY_ATTRIBUTE_WRITE,
+                          0x10,
+                          CHAR_VALUE_LEN_VARIABLE,
+                          &(LCS1_Context.StatusCharHdle));
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    LOG_INFO_BLE("  Fail   : aci_gatt_add_char command   : STATUS, error code: 0x%02X\n", ret);
+  }
+  else
+  {
+    LOG_INFO_BLE("  Success: aci_gatt_add_char command   : StatusCharHdle = 0x%04X\n",LCS1_Context.StatusCharHdle);
+  }
+
+  /* USER CODE BEGIN SVCCTL_InitService1Char3 */
+  /* Place holder for Characteristic Descriptors */
+
+  /* USER CODE END SVCCTL_InitService1Char3 */
 
   /* USER CODE BEGIN SVCCTL_InitService1Svc_2 */
 
@@ -381,23 +503,61 @@ tBleStatus LCS1_UpdateValue(LCS1_CharOpcode_t CharOpcode, LCS1_Data_t *pData)
 
   switch(CharOpcode)
   {
-    case LCS1_LCDATA:
+    case LCS1_WEIGHT:
       ret = aci_gatt_update_char_value(LCS1_Context.Lcs1SvcHdle,
-                                       LCS1_Context.LcdataCharHdle,
+                                       LCS1_Context.WeightCharHdle,
                                        0, /* charValOffset */
                                        pData->Length, /* charValueLen */
                                        (uint8_t *)pData->p_Payload);
       if (ret != BLE_STATUS_SUCCESS)
       {
-        LOG_INFO_BLE("  Fail   : aci_gatt_update_char_value LCDATA command, error code: 0x%02X\n", ret);
+        LOG_INFO_BLE("  Fail   : aci_gatt_update_char_value WEIGHT command, error code: 0x%02X\n", ret);
       }
       else
       {
-        LOG_INFO_BLE("  Success: aci_gatt_update_char_value LCDATA command\n");
+        LOG_INFO_BLE("  Success: aci_gatt_update_char_value WEIGHT command\n");
       }
       /* USER CODE BEGIN Service1_Char_Value_1 */
 
       /* USER CODE END Service1_Char_Value_1 */
+      break;
+
+    case LCS1_COMMAND:
+      ret = aci_gatt_update_char_value(LCS1_Context.Lcs1SvcHdle,
+                                       LCS1_Context.CommandCharHdle,
+                                       0, /* charValOffset */
+                                       pData->Length, /* charValueLen */
+                                       (uint8_t *)pData->p_Payload);
+      if (ret != BLE_STATUS_SUCCESS)
+      {
+        LOG_INFO_BLE("  Fail   : aci_gatt_update_char_value COMMAND command, error code: 0x%02X\n", ret);
+      }
+      else
+      {
+        LOG_INFO_BLE("  Success: aci_gatt_update_char_value COMMAND command\n");
+      }
+      /* USER CODE BEGIN Service1_Char_Value_2 */
+
+      /* USER CODE END Service1_Char_Value_2 */
+      break;
+
+    case LCS1_STATUS:
+      ret = aci_gatt_update_char_value(LCS1_Context.Lcs1SvcHdle,
+                                       LCS1_Context.StatusCharHdle,
+                                       0, /* charValOffset */
+                                       pData->Length, /* charValueLen */
+                                       (uint8_t *)pData->p_Payload);
+      if (ret != BLE_STATUS_SUCCESS)
+      {
+        LOG_INFO_BLE("  Fail   : aci_gatt_update_char_value STATUS command, error code: 0x%02X\n", ret);
+      }
+      else
+      {
+        LOG_INFO_BLE("  Success: aci_gatt_update_char_value STATUS command\n");
+      }
+      /* USER CODE BEGIN Service1_Char_Value_3 */
+
+      /* USER CODE END Service1_Char_Value_3 */
       break;
 
     default:

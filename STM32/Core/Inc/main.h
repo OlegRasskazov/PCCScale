@@ -81,6 +81,8 @@ void Error_Handler(void);
 #define VCP1_TX_GPIO_Port GPIOB
 #define VCP1_RX_Pin GPIO_PIN_8
 #define VCP1_RX_GPIO_Port GPIOA
+#define SPI2_LC1_CS_Pin GPIO_PIN_9
+#define SPI2_LC1_CS_GPIO_Port GPIOB
 #define USB_FS_N_Pin GPIO_PIN_7
 #define USB_FS_N_GPIO_Port GPIOD
 #define USB_FS_P_Pin GPIO_PIN_6

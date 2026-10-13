@@ -1,0 +1,53 @@
+﻿<UserControl x:Class="PCCScale.Views.OvenView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:views="clr-namespace:PCCScale.Views"
+             mc:Ignorable="d">
+
+    <Border
+        BorderThickness="1"
+        Padding="10"
+        BorderBrush="Black">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Number, StringFormat=Oven {0}}" FontSize="12" FontWeight="Bold"/>
+                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding PCMs}" SelectedItem="{Binding PCM}" DisplayMemberPath="Name" FontSize="12" FontWeight="Bold"/>
+                <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding CurrentTemp, StringFormat=Current Temp.: {0}}" FontSize="10" FontWeight="Bold" Margin="5,5,0,5"/>
+                </Grid>
+            </Grid>
+
+            <ItemsControl Grid.Row="1"  ItemsSource="{Binding Pans}" Margin="0,5,0,0">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <views:PanView Margin="0,5,0,5"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+        </Grid>
+    </Border>
+</UserControl>

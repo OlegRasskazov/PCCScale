@@ -15,12 +15,13 @@ async def main():
         await asyncio.sleep(10)
 
     results = sorted(devices.values(), key=lambda x: x[1].rssi, reverse=True)
-
+    
     for device, adv in results:
-        print(
-            f"{adv.rssi:4} dBm | "
-            f"{adv.local_name or 'None':20} | "
-            f"{device.address}"
-        )
+        if adv.local_name and "PCCScale" in adv.local_name:
+            print(
+                f"{adv.rssi:4} dBm | "
+                f"{adv.local_name or 'None':20} | "
+                f"{device.address}"
+            )
 
 asyncio.run(main())

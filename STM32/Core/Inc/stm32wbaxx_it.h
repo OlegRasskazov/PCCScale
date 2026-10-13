@@ -57,6 +57,7 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 void RTC_IRQHandler(void);
 void RCC_IRQHandler(void);
+void TIM2_IRQHandler(void);
 void TIM16_IRQHandler(void);
 void RADIO_IRQHandler(void);
 void HASH_IRQHandler(void);

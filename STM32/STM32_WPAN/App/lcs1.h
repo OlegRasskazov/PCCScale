@@ -42,7 +42,9 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 typedef enum
 {
-  LCS1_LCDATA,
+  LCS1_WEIGHT,
+  LCS1_COMMAND,
+  LCS1_STATUS,
   /* USER CODE BEGIN Service1_CharOpcode_t */
 
   /* USER CODE END Service1_CharOpcode_t */
@@ -51,8 +53,12 @@ typedef enum
 
 typedef enum
 {
-  LCS1_LCDATA_NOTIFY_ENABLED_EVT,
-  LCS1_LCDATA_NOTIFY_DISABLED_EVT,
+  LCS1_WEIGHT_NOTIFY_ENABLED_EVT,
+  LCS1_WEIGHT_NOTIFY_DISABLED_EVT,
+  LCS1_COMMAND_WRITE_EVT,
+  LCS1_STATUS_READ_EVT,
+  LCS1_STATUS_NOTIFY_ENABLED_EVT,
+  LCS1_STATUS_NOTIFY_DISABLED_EVT,
   /* USER CODE BEGIN Service1_OpcodeEvt_t */
 
   /* USER CODE END Service1_OpcodeEvt_t */

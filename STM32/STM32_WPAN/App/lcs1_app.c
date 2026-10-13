@@ -36,13 +36,17 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef enum {
+  CMD_SET_THRESHOLD = 0x01
+} Command_t;
 /* USER CODE END PTD */
 
 typedef enum
 {
-  Lcdata_NOTIFICATION_OFF,
-  Lcdata_NOTIFICATION_ON,
+  Weight_NOTIFICATION_OFF,
+  Weight_NOTIFICATION_ON,
+  Status_NOTIFICATION_OFF,
+  Status_NOTIFICATION_ON,
   /* USER CODE BEGIN Service1_APP_SendInformation_t */
 
   /* USER CODE END Service1_APP_SendInformation_t */
@@ -51,7 +55,8 @@ typedef enum
 
 typedef struct
 {
-  LCS1_APP_SendInformation_t     Lcdata_Notification_Status;
+  LCS1_APP_SendInformation_t     Weight_Notification_Status;
+  LCS1_APP_SendInformation_t     Status_Notification_Status;
   /* USER CODE BEGIN Service1_APP_Context_t */
 
   /* USER CODE END Service1_APP_Context_t */
@@ -60,7 +65,7 @@ typedef struct
 
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+static int32_t thresholds[8][6];
 /* USER CODE END PD */
 
 /* External variables --------------------------------------------------------*/
@@ -83,7 +88,8 @@ uint8_t a_LCS1_UpdateCharData[247];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-static void LCS1_Lcdata_SendNotification(void);
+static void LCS1_Weight_SendNotification(void);
+static void LCS1_Status_SendNotification(void);
 
 /* USER CODE BEGIN PFP */
 
@@ -101,16 +107,74 @@ void LCS1_Notification(LCS1_NotificationEvt_t *p_Notification)
 
     /* USER CODE END Service1_Notification_Service1_EvtOpcode */
 
-    case LCS1_LCDATA_NOTIFY_ENABLED_EVT:
+    case LCS1_WEIGHT_NOTIFY_ENABLED_EVT:
       /* USER CODE BEGIN Service1Char1_NOTIFY_ENABLED_EVT */
 
       /* USER CODE END Service1Char1_NOTIFY_ENABLED_EVT */
       break;
 
-    case LCS1_LCDATA_NOTIFY_DISABLED_EVT:
+    case LCS1_WEIGHT_NOTIFY_DISABLED_EVT:
       /* USER CODE BEGIN Service1Char1_NOTIFY_DISABLED_EVT */
 
       /* USER CODE END Service1Char1_NOTIFY_DISABLED_EVT */
+      break;
+
+    case LCS1_COMMAND_WRITE_EVT:
+      /* USER CODE BEGIN Service1Char2_WRITE_EVT */
+
+      uint8_t *data = p_Notification->DataTransfered.p_Payload;
+      uint16_t length = p_Notification->DataTransfered.Length;
+
+      if (length < 1)
+        break;
+
+      Command_t command = (Command_t)data[0];
+
+      switch (command) {
+      case CMD_SET_THRESHOLD: {
+        if (length != 7)
+          break;
+
+        uint8_t rack = data[1];
+        uint8_t pan = data[2];
+
+        if (rack >= 8 || pan >= 6)
+          break;
+
+        int32_t threshold =
+            (int32_t)(((uint32_t)data[3]) | ((uint32_t)data[4] << 8) |
+                      ((uint32_t)data[5] << 16) | ((uint32_t)data[6] << 24));
+
+        thresholds[rack][pan] = threshold;
+
+        break;
+      }
+
+      default:
+        break;
+      }
+
+      break;
+
+      /* USER CODE END Service1Char2_WRITE_EVT */
+      break;
+
+    case LCS1_STATUS_READ_EVT:
+      /* USER CODE BEGIN Service1Char3_READ_EVT */
+
+      /* USER CODE END Service1Char3_READ_EVT */
+      break;
+
+    case LCS1_STATUS_NOTIFY_ENABLED_EVT:
+      /* USER CODE BEGIN Service1Char3_NOTIFY_ENABLED_EVT */
+
+      /* USER CODE END Service1Char3_NOTIFY_ENABLED_EVT */
+      break;
+
+    case LCS1_STATUS_NOTIFY_DISABLED_EVT:
+      /* USER CODE BEGIN Service1Char3_NOTIFY_DISABLED_EVT */
+
+      /* USER CODE END Service1Char3_NOTIFY_DISABLED_EVT */
       break;
 
     default:
@@ -182,9 +246,9 @@ void LCS1_APP_Init(void)
  * LOCAL FUNCTIONS
  *
  *************************************************************/
-__USED void LCS1_Lcdata_SendNotification(void) /* Property Notification */
+__USED void LCS1_Weight_SendNotification(void) /* Property Notification */
 {
-  LCS1_APP_SendInformation_t notification_on_off = Lcdata_NOTIFICATION_OFF;
+  LCS1_APP_SendInformation_t notification_on_off = Weight_NOTIFICATION_OFF;
   LCS1_Data_t lcs1_notification_data;
 
   lcs1_notification_data.p_Payload = (uint8_t*)a_LCS1_UpdateCharData;
@@ -194,14 +258,38 @@ __USED void LCS1_Lcdata_SendNotification(void) /* Property Notification */
 
   /* USER CODE END Service1Char1_NS_1 */
 
-  if (notification_on_off != Lcdata_NOTIFICATION_OFF)
+  if (notification_on_off != Weight_NOTIFICATION_OFF)
   {
-    LCS1_UpdateValue(LCS1_LCDATA, &lcs1_notification_data);
+    LCS1_UpdateValue(LCS1_WEIGHT, &lcs1_notification_data);
   }
 
   /* USER CODE BEGIN Service1Char1_NS_Last */
 
   /* USER CODE END Service1Char1_NS_Last */
+
+  return;
+}
+
+__USED void LCS1_Status_SendNotification(void) /* Property Notification */
+{
+  LCS1_APP_SendInformation_t notification_on_off = Status_NOTIFICATION_OFF;
+  LCS1_Data_t lcs1_notification_data;
+
+  lcs1_notification_data.p_Payload = (uint8_t*)a_LCS1_UpdateCharData;
+  lcs1_notification_data.Length = 0;
+
+  /* USER CODE BEGIN Service1Char3_NS_1 */
+
+  /* USER CODE END Service1Char3_NS_1 */
+
+  if (notification_on_off != Status_NOTIFICATION_OFF)
+  {
+    LCS1_UpdateValue(LCS1_STATUS, &lcs1_notification_data);
+  }
+
+  /* USER CODE BEGIN Service1Char3_NS_Last */
+
+  /* USER CODE END Service1Char3_NS_Last */
 
   return;
 }

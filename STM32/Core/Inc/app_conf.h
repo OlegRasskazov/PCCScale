@@ -243,7 +243,7 @@
  *   - 1 : Low power active, mode(s) selected with CFG_LPM_mode_SUPPORTED
  *   - 2 : In addition log and debug are disabled to reach lowest power figures.
  ******************************************************************************/
-#define CFG_LPM_LEVEL               (1U)
+#define CFG_LPM_LEVEL               (0U)
 
 #define CFG_LPM_STOP1_SUPPORTED     (1U)
 #define CFG_LPM_STOP2_SUPPORTED     (0U)

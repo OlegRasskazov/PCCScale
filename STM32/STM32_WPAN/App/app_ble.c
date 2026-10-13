@@ -338,6 +338,7 @@ SVCCTL_UserEvtFlowStatus_t SVCCTL_App_Notification(void *p_Pckt)
                     p_disconnection_complete_event->Reason);
 
         /* USER CODE BEGIN EVT_DISCONN_COMPLETE_2 */
+        APP_BLE_Procedure_Gap_Peripheral(PROC_GAP_PERIPH_ADVERTISE_START_FAST);
 
         /* USER CODE END EVT_DISCONN_COMPLETE_2 */
       }
@@ -1087,7 +1088,6 @@ tBleStatus SetGapDeviceName(uint8_t *devicename, uint8_t devicename_len)
 
 void BleStack_Process_BG(void)
 {
-
   if (BleStack_Process() == 0x0)
   {
     BleStackCB_Process();

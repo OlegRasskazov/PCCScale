@@ -1,9 +1,10 @@
 ﻿<Application x:Class="PCCScale.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:PCCScale"
-             StartupUri="MainWindow.xaml">
+             xmlns:converters="clr-namespace:PCCScale.Converters"
+             xmlns:local="clr-namespace:PCCScale">
     <Application.Resources>
-         
+        <converters:PanStateToBrushConverter x:Key="PanStateToBrushConverter" />
+
     </Application.Resources>
 </Application>

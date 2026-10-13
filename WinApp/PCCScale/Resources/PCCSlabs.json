@@ -1,0 +1,18 @@
+[
+  {
+    "Name": "E2S2 Small",
+    "Length": 259,
+    "Width": 391,
+    "Thickness": 12.55,
+    "Weight": 345,
+    "TargetWeightPercentage": 60
+  },
+  {
+    "Name": "Custom",
+    "Length": 1,
+    "Width": 1,
+    "Thickness": 1,
+    "Weight": 100,
+    "TargetWeightPercentage": 1
+  }
+]
