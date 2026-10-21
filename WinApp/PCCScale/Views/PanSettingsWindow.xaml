@@ -3,12 +3,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
         xmlns:local="clr-namespace:PCCScale.Views" 
         xmlns:viewmodels="clr-namespace:PCCScale.ViewModels" 
         d:DataContext="{d:DesignInstance Type=viewmodels:PanSettingsViewModel}"
         mc:Ignorable="d"
         Title="Pan Settings" Height="600" Width="400"
         WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <BooleanToVisibilityConverter
+        x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
     <Grid Margin="20">
 
         <StackPanel>
@@ -17,14 +22,14 @@
             <TextBlock Text="{Binding Pan.Weight}" FontSize="12"/>
 
             <Separator Margin="0,10"/>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <StackPanel IsEnabled="{Binding IsEditingEnabled}" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <TextBlock Text="PCC block" FontSize="18" FontWeight="SemiBold"/>
                 <ComboBox ItemsSource="{Binding Pan.PCCslabs}"
-                      SelectedItem="{Binding Pan.PCCslab}"
+                      SelectedItem="{Binding Pan.PccSlab}"
                       DisplayMemberPath="Name"
                       Width="100" Margin="10,0,0,0"/>
             </StackPanel>
-            <Grid Margin="0,10,0,0">
+            <Grid IsEnabled="{Binding IsEditingEnabled}" Margin="0,10,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="10"/>
@@ -43,11 +48,11 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Length" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Pan.PCCslab.Length}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Pan.PccSlab.Length}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Width" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Pan.PCCslab.Width}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0"  />
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Pan.PccSlab.Width}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0"  />
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Thickness" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Pan.PCCslab.Thickness}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Pan.PccSlab.Thickness}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
                 </Grid>
 
                 <Grid Grid.Column="2">
@@ -63,21 +68,25 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Weight" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Pan.PCCslab.Weight}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Pan.PccSlab.Weight}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Target Wt.%" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Pan.PCCslab.TargetWeightPercentage}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Pan.PccSlab.TargetWeightPercentage}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
                 </Grid>
             </Grid>
             <Separator Margin="0,10"/>
-            <Button Content="Tare" Command="{Binding TareCommand}" Margin="5,0,0,0" Width="100"/>
+            <Button IsEnabled="{Binding IsEditingEnabled}" Content="Tare" Command="{Binding TareCommand}" Width="100"/>
             <Separator Margin="0,20"/>
 
-            <TextBlock Text="Calibration" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,10,0,0">
-                <TextBlock Text="Calibration weight" FontSize="12" FontWeight="Medium"/>
-                <!--<TextBox Text="{Binding Pan.CalibrationWeight}" FontSize="12" FontWeight="Medium" Width="100" Margin="5,0,0,0"/>-->
+            <TextBlock Text="{Binding CalibrationMessage}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="350" VerticalAlignment="Center"/>
+            <Image Visibility="{Binding IsCalibrating, Converter={StaticResource BooleanToVisibilityConverter}}" Width="80" Height="80" gif:ImageBehavior.AnimatedSource="/Resources/oia-uia.gif" gif:ImageBehavior.RepeatBehavior="Forever"/>
+            <StackPanel Visibility="{Binding IsEditingEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,10,0,0">
+                <Button  Content="Start" Command="{Binding CalibrateCommand}" Width="100"/>
             </StackPanel>
-            
+            <StackPanel Visibility="{Binding IsContinueCalibrationVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,10,0,0">
+                <TextBox Text="{Binding ReferenceWeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" FontSize="12" FontWeight="Medium" Width="100"/>
+                <Button  Content="Continue" IsEnabled="{Binding IsContinueCalibrationEnabled}" Command="{Binding ContinueCalibrationCommand}" Margin="5,0,0,0" Width="100"/>
+            </StackPanel>
+
         </StackPanel>
 
     </Grid>

@@ -1,32 +1,21 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.DependencyInjection;
 using PCCScale.Models;
 using PCCScale.Services;
 using PCCScale.ViewModels.Factories;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace PCCScale.ViewModels
 {
-    public class OvenViewModel : INotifyPropertyChanged
+    public partial class OvenViewModel : ObservableObject
     {
+        [ObservableProperty]
         private double _currentTemp;
-
 
         public int Number { get; }
         public ObservableCollection<PCM> PCMs { get; }
         public PCM PCM { get; set; }
         public ObservableCollection<PanViewModel> Pans { get; }
-        public double CurrentTemp { 
-            get => _currentTemp; 
-            set {
-                if (_currentTemp == value)
-                    return;
-                _currentTemp = value;
-                OnPropertyChanged();
-
-            }
-        }
 
         public OvenViewModel(int number, IServiceProvider services)
         {
@@ -46,14 +35,5 @@ namespace PCCScale.ViewModels
             PCM = PCMs.FirstOrDefault() ?? throw new ArgumentException("No PCM available", nameof(PCMs));
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged(
-        [CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(
-                this,
-                new PropertyChangedEventArgs(propertyName));
-        }
     }
 }

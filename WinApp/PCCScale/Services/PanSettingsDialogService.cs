@@ -18,17 +18,5 @@ namespace PCCScale.Services
 
             window.ShowDialog();
         }
-        public void ShowCalibration(PanViewModel pan)
-        {
-            var viewModel = new LoadCellCalibrationViewModel(pan);
-
-            var window = new LoadCellCalibrationWindow
-            {
-                DataContext = viewModel,
-                Owner = Application.Current.MainWindow
-            };
-
-            window.ShowDialog();
-        }
     }
 }

@@ -4,6 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:bleState="clr-namespace:PCCScale.Services.BleService"
         xmlns:views="clr-namespace:PCCScale.Views"
         xmlns:local="clr-namespace:PCCScale"
         mc:Ignorable="d"
@@ -14,7 +15,77 @@
             <RowDefinition Height="70px"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Button Grid.Row="0" Command="{Binding ConnectCommand}" Content="Connect" Width="100" Height="30"/>
+        <Border Grid.Row="0" Padding="10,5" CornerRadius="12" HorizontalAlignment="Left" Height="40">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#FEE2E2"/>
+
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ConnectionState}"
+                             Value="{x:Static bleState:BleConnectionStateEnum.Connected}">
+                            <Setter Property="Background" Value="#DCFCE7"/>
+                        </DataTrigger>
+
+                        <DataTrigger Binding="{Binding ConnectionState}"
+                             Value="{x:Static bleState:BleConnectionStateEnum.Connecting}">
+                            <Setter Property="Background" Value="#FEF3C7"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+
+            <StackPanel Orientation="Horizontal"
+                VerticalAlignment="Center">
+                <Path Width="16" Height="16" Stretch="Uniform" Data="M7 7L17 17L12 22V2L17 7L7 17">
+
+                    <Path.Style>
+                        <Style TargetType="Path">
+                            <Setter Property="Stroke" Value="#DC2626"/>
+                            <Setter Property="StrokeThickness" Value="2"/>
+                            <Setter Property="StrokeStartLineCap" Value="Round"/>
+                            <Setter Property="StrokeEndLineCap" Value="Round"/>
+                            <Setter Property="StrokeLineJoin" Value="Round"/>
+
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ConnectionState}"
+                                     Value="{x:Static bleState:BleConnectionStateEnum.Connected}">
+                                    <Setter Property="Stroke" Value="#16A34A"/>
+                                </DataTrigger>
+
+                                <DataTrigger Binding="{Binding ConnectionState}"
+                                     Value="{x:Static bleState:BleConnectionStateEnum.Connecting}">
+                                    <Setter Property="Stroke" Value="#D97706"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Path.Style>
+                </Path>
+
+                <!-- Status text -->
+                <TextBlock Margin="7,0,0,0" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="Disconnected"/>
+                            <Setter Property="Foreground" Value="#DC2626"/>
+
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ConnectionState}"
+                                     Value="{x:Static bleState:BleConnectionStateEnum.Connected}">
+                                    <Setter Property="Text" Value="Connected"/>
+                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                </DataTrigger>
+
+                                <DataTrigger Binding="{Binding ConnectionState}"
+                                     Value="{x:Static bleState:BleConnectionStateEnum.Connecting}">
+                                    <Setter Property="Text" Value="Reconnecting"/>
+                                    <Setter Property="Foreground" Value="#D97706"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </Border>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="30"/>

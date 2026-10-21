@@ -28,8 +28,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "ad7794.h"
 #include "lcs1.h"
-#include "AD7794/AD7794.c"
 
 /* USER CODE END Includes */
 
@@ -128,7 +128,7 @@ int main(void) {
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET); // LED OFF
     HAL_Delay(100);
   }
-  AD7794_WriteConfig(0x0712);
+  AD7794_WriteConfig(AD7794_DEFAULT_CONFIG | AD7794_CFG_CH_AIN3);
   AD7794_WriteMode(0x000A);
   HAL_Delay(100);
 
@@ -146,15 +146,11 @@ int main(void) {
   __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
   HAL_TIM_Base_Start_IT(&htim2);
   while (1) {
-    // adcRaw = AD7794_ReadData();
-    if (sendWeight) {
-      sendWeight = 0;
-      adcRaw = AD7794_ReadData();
-      LCS1_Data_t data;
-      data.p_Payload = (uint8_t *)&adcRaw;
-      data.Length = sizeof(adcRaw);
-      LCS1_UpdateValue(LCS1_WEIGHT, &data);
-    }
+    adcRaw = AD7794_ReadData();
+    LCS1_Data_t data;
+    data.p_Payload = (uint8_t *)&adcRaw;
+    data.Length = sizeof(adcRaw);
+    LCS1_UpdateValue(LCS1_WEIGHT, &data);
 
     /* USER CODE END WHILE */
     MX_APPE_Process();
@@ -247,7 +243,7 @@ void PeriphCommonClock_Config(void) {
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim->Instance == TIM2) {
-    sendWeight = 1;
+    // TODO timer on status sendWeight = 1;
   }
 }
 /* USER CODE END 4 */

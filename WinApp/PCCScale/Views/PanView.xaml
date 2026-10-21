@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:views="clr-namespace:PCCScale.Views"
              mc:Ignorable="d">
-    <Border BorderThickness="1" Padding="2" BorderBrush="Black">
+    <Border IsEnabled="{Binding IsConnected}" BorderThickness="1" Padding="2" BorderBrush="Black">
         <Border.Style>
             <Style TargetType="Border">
                 <Setter Property="Background" Value="LightCoral"/>

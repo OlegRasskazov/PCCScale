@@ -1,19 +1,20 @@
-﻿using System.Buffers.Binary;
+﻿using Microsoft.Extensions.Options;
+using System.Buffers.Binary;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using Windows.Networking.Connectivity;
 using Windows.Storage.Streams;
 
-namespace PCCScale.Services
+namespace PCCScale.Services.BleService
 {
     public class BLEService
     {
-        private static readonly Guid ServiceUuid = Guid.Parse("0000A001-CC7A-482A-984A-7F2ED5B3E58F");
-        private static readonly Guid WeightUuid = Guid.Parse("0000A002-8E22-4541-9D4C-21EDAE82ED19");
-        private static readonly Guid CommandUuid = Guid.Parse("0000A003-8E22-4541-9D4C-21EDAE82ED19");
-        private static readonly Guid StatusUuid = Guid.Parse("0000A004-8E22-4541-9D4C-21EDAE82ED19");
-        private static CancellationTokenSource? _cts;
+        private readonly SemaphoreSlim _connectLock = new(1, 1);
+        private CancellationTokenSource _cts = new CancellationTokenSource();
+        private Task? _autoConnnectLoopTask;
 
+        private readonly BleOptions _options;
         private BluetoothLEAdvertisementWatcher? _watcher;
 
         private BluetoothLEDevice? _bluetoothLeDevice;
@@ -25,23 +26,18 @@ namespace PCCScale.Services
         private GattCharacteristic? _statusCharacteristic;
 
 
-        public bool IsConnected => _bluetoothLeDevice?.ConnectionStatus == BluetoothConnectionStatus.Connected;
-
+        public bool IsConnected;
+        public event Action<BleConnectionStateEnum>? ConnectionStateChanged;
         public event Action<int, int, int>? WeightValueUpdated;
 
-        public BLEService()
-        {
-            //ConnectAsync().GetAwaiter().GetResult();
-        }
-
-        public async Task<bool> ConnectAsync()
+        public BLEService(IOptions<BleOptions> options) => _options = options.Value;
+        public void Connect() => _autoConnnectLoopTask = AutoConnectLoopAsync(_cts.Token);
+        private async Task<bool> ConnectAsync()
         {
             if (IsConnected)
                 return true;
 
-            var addressSource =
-                new TaskCompletionSource<ulong>(
-                    TaskCreationOptions.RunContinuationsAsynchronously);
+            var addressSource = new TaskCompletionSource<ulong>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             _watcher = new BluetoothLEAdvertisementWatcher();
 
@@ -49,7 +45,7 @@ namespace PCCScale.Services
                 BluetoothLEAdvertisementWatcher sender,
                 BluetoothLEAdvertisementReceivedEventArgs args)
             {
-                if (args.Advertisement.LocalName != "PCCScale")
+                if (args.Advertisement.LocalName != _options.DeviceName)
                     return;
 
                 addressSource.TrySetResult(args.BluetoothAddress);
@@ -62,8 +58,7 @@ namespace PCCScale.Services
 
             try
             {
-                address = await addressSource.Task.WaitAsync(
-                    TimeSpan.FromSeconds(15));
+                address = await addressSource.Task.WaitAsync(TimeSpan.FromSeconds(15));
             }
             catch (TimeoutException)
             {
@@ -76,16 +71,12 @@ namespace PCCScale.Services
                 _watcher = null;
             }
 
-            _bluetoothLeDevice =
-                await BluetoothLEDevice.FromBluetoothAddressAsync(address);
-
+            _bluetoothLeDevice = await BluetoothLEDevice.FromBluetoothAddressAsync(address);
+            _bluetoothLeDevice.ConnectionStatusChanged += DeviceConnectionStatusChanged;
             if (_bluetoothLeDevice is null)
                 return false;
 
-            var serviceResult =
-                await _bluetoothLeDevice.GetGattServicesForUuidAsync(
-                    ServiceUuid,
-                    BluetoothCacheMode.Uncached);
+            var serviceResult = await _bluetoothLeDevice.GetGattServicesForUuidAsync(_options.ServiceUuid, BluetoothCacheMode.Uncached);
 
             if (serviceResult.Status != GattCommunicationStatus.Success)
                 return false;
@@ -104,15 +95,15 @@ namespace PCCScale.Services
 
             _weightCharacteristic =
                 characteristicsResult.Characteristics
-                    .FirstOrDefault(c => c.Uuid == WeightUuid);
+                    .FirstOrDefault(c => c.Uuid == _options.WeightUuid);
 
             _commandCharacteristic =
                 characteristicsResult.Characteristics
-                    .FirstOrDefault(c => c.Uuid == CommandUuid);
+                    .FirstOrDefault(c => c.Uuid == _options.CommandUuid);
 
             _statusCharacteristic =
                 characteristicsResult.Characteristics
-                    .FirstOrDefault(c => c.Uuid == StatusUuid);
+                    .FirstOrDefault(c => c.Uuid == _options.StatusUuid);
 
             if (_weightCharacteristic is null ||
                 _commandCharacteristic is null ||
@@ -150,22 +141,7 @@ namespace PCCScale.Services
             return await SendCommandAsync(CommandEnum.SetThreshold, payload);
         }
 
-        //public Task DisconnectAsync()
-        //{
-        //    if (_weightCharacteristic is not null)
-        //        _weightCharacteristic.ValueChanged -= OnWeightChanged;
-
-        //    _weightCharacteristic = null;
-
-        //    _service?.Dispose();
-        //    _service = null;
-
-        //    return Task.CompletedTask;
-        //}
-
-        private void OnWeightChanged(
-            GattCharacteristic sender,
-            GattValueChangedEventArgs args)
+        private void OnWeightChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
         {
             var data = new byte[args.CharacteristicValue.Length];
 
@@ -178,6 +154,56 @@ namespace PCCScale.Services
             int weight = BinaryPrimitives.ReadInt32LittleEndian(data);
 
             WeightValueUpdated?.Invoke(1, 3, weight);
+        }
+
+        private async Task AutoConnectLoopAsync(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    if (!IsConnected)
+                    {
+                        ConnectionStateChanged?.Invoke(BleConnectionStateEnum.Connecting);
+                        await TryConnectAsync(token);
+                    }
+                }
+                catch (OperationCanceledException)
+                    when (token.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception _) { }
+
+                await Task.Delay(TimeSpan.FromSeconds(5), token);
+            }
+        }
+        private async Task<bool> TryConnectAsync(CancellationToken cancellationToken)
+        {
+            await _connectLock.WaitAsync(cancellationToken);
+
+            try
+            {
+                if (IsConnected)
+                    return true;
+
+                return await ConnectAsync();
+            }
+            finally
+            {
+                _connectLock.Release();
+            }
+        }
+
+        private void DeviceConnectionStatusChanged(BluetoothLEDevice device, object obj)
+        {
+            IsConnected = device.ConnectionStatus switch
+            {
+                BluetoothConnectionStatus.Connected => true,
+                BluetoothConnectionStatus.Disconnected => false,
+                _ => throw new NotImplementedException()
+            };
+            ConnectionStateChanged?.Invoke(device.ConnectionStatus == BluetoothConnectionStatus.Connected ? BleConnectionStateEnum.Connected : BleConnectionStateEnum.Disconnected);
         }
     }
 }

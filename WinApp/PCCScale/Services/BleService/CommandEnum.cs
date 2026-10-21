@@ -1,4 +1,4 @@
-﻿namespace PCCScale.Services
+﻿namespace PCCScale.Services.BleService
 {
     public enum CommandEnum
     {
