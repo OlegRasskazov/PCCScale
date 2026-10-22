@@ -29,7 +29,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ad7794.h"
-#include "lcs1.h"
+#include "ble_notify.h"
+#include "lcs1.h" 
+#include "stm32_seq.h"
 
 /* USER CODE END Includes */
 
@@ -52,11 +54,19 @@
 
 /* USER CODE BEGIN PV */
 
-volatile uint8_t sendWeight = 0;
-volatile uint8_t dbg_adv_status;
-volatile uint8_t dbg_adv_len;
-volatile uint8_t adcId = 1;
-volatile uint32_t adcRaw = 10000;
+static uint8_t bleDivider = 0;
+static const AD7794_ChipSelect adcChipSelects[] = {
+    {GPIOB, GPIO_PIN_9}, // ADC 1
+                         // {GPIOA, GPIO_PIN_0}, // ADC 2
+                         // {GPIOA, GPIO_PIN_1}, // ADC 3
+                         // {GPIOA, GPIO_PIN_2}, // ADC 4
+                         // {GPIOA, GPIO_PIN_3}, // ADC 5
+                         // {GPIOB, GPIO_PIN_0}, // ADC 6
+                         // {GPIOB, GPIO_PIN_1}, // ADC 7
+                         // {GPIOB, GPIO_PIN_2}, // ADC 8
+                         // {GPIOB, GPIO_PIN_3}, // ADC 9
+                         // {GPIOB, GPIO_PIN_4}  // ADC 10
+};
 
 /* USER CODE END PV */
 
@@ -115,11 +125,9 @@ int main(void) {
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET); // CS idle HIGH
-  HAL_Delay(10);
-  AD7794_Reset();
-  HAL_Delay(1);
-  adcId = AD7794_ReadId();
+  AD7794_Init(&hspi2, adcChipSelects,
+              sizeof(adcChipSelects) / sizeof(adcChipSelects[0]));
+  BLE_Notify_Init();
 
   for (int i = 0; i < 5; i++) {
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_RESET); // LED ON
@@ -128,9 +136,6 @@ int main(void) {
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, GPIO_PIN_SET); // LED OFF
     HAL_Delay(100);
   }
-  AD7794_WriteConfig(AD7794_DEFAULT_CONFIG | AD7794_CFG_CH_AIN3);
-  AD7794_WriteMode(0x000A);
-  HAL_Delay(100);
 
   /* USER CODE END 2 */
 
@@ -146,11 +151,6 @@ int main(void) {
   __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
   HAL_TIM_Base_Start_IT(&htim2);
   while (1) {
-    adcRaw = AD7794_ReadData();
-    LCS1_Data_t data;
-    data.p_Payload = (uint8_t *)&adcRaw;
-    data.Length = sizeof(adcRaw);
-    LCS1_UpdateValue(LCS1_WEIGHT, &data);
 
     /* USER CODE END WHILE */
     MX_APPE_Process();
@@ -243,7 +243,12 @@ void PeriphCommonClock_Config(void) {
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   if (htim->Instance == TIM2) {
-    // TODO timer on status sendWeight = 1;
+    UTIL_SEQ_SetTask(CFG_TASK_ADC_ID, CFG_SEQ_PRIO_0);
+    if (++bleDivider >= 2) {
+      bleDivider = 0;
+
+      UTIL_SEQ_SetTask(CFG_TASK_BLE_WEIGHT_ID, CFG_SEQ_PRIO_0);
+    }
   }
 }
 /* USER CODE END 4 */

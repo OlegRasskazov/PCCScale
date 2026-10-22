@@ -84,6 +84,7 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/sysmem.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/syscalls.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/ad7794.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/ble_notify.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../startup_stm32wba65xx.s
 )
 

@@ -148,12 +148,15 @@ namespace PCCScale.Services.BleService
             using var reader = DataReader.FromBuffer(args.CharacteristicValue);
             reader.ReadBytes(data);
 
-            if (data.Length < 4)
+            if (data.Length != 6)
                 return;
 
-            int weight = BinaryPrimitives.ReadInt32LittleEndian(data);
+            byte oven = data[0];
+            byte pan = data[1];
 
-            WeightValueUpdated?.Invoke(1, 3, weight);
+            int weight = BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(2, 4));
+
+            WeightValueUpdated?.Invoke(oven, pan, weight);
         }
 
         private async Task AutoConnectLoopAsync(CancellationToken token)

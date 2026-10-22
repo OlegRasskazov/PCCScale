@@ -2,6 +2,8 @@
 #define AD7794_H
 
 #include <stdint.h>
+#include "stm32wbaxx_hal.h"
+#include <stdbool.h>
 
 // ============================================================
 // AD7794 CONFIGURATION REGISTER (16-bit)
@@ -163,6 +165,16 @@
 // DEFAULT PCCScale CONFIGURATION
 // ============================================================
 
+#define AD7794_MAX_DEVICES 10U
+#define AD7794_CHANNEL_COUNT 6U
+
+#define AD7794_STATUS_RDY 0x80U
+#define AD7794_STATUS_ERR 0x40U
+#define AD7794_STATUS_NOXREF 0x20U
+#define AD7794_STATUS_CH_MASK 0x07U
+
+#define AD7794_TIMEOUT_MS 1000U
+
 #define AD7794_DEFAULT_CONFIG                                                  \
   (AD7794_CFG_CH_AIN1 | AD7794_CFG_GAIN_128 | AD7794_CFG_BUFFER_ON |           \
    AD7794_CFG_BIPOLAR | AD7794_CFG_REF_EXT1)
@@ -171,10 +183,48 @@
   (AD7794_MODE_CONTINUOUS | AD7794_MODE_CHOP_ON | AD7794_MODE_CLK_INTERNAL |   \
    AD7794_MODE_RATE_16_7HZ_60)
 
-void AD7794_Reset(void);
-uint8_t AD7794_ReadId(void);
-void AD7794_WriteConfig(uint16_t config);
-void AD7794_WriteMode(uint16_t mode);
-uint32_t AD7794_ReadData(void);
+typedef struct {
+  GPIO_TypeDef *port;
+  uint16_t pin;
+} AD7794_ChipSelect;
+
+typedef struct {
+  AD7794_ChipSelect cs;
+
+  uint8_t currentChannel;
+  uint8_t id;
+
+  uint32_t raw[AD7794_CHANNEL_COUNT];
+  uint32_t updatedAt[AD7794_CHANNEL_COUNT];
+
+  uint8_t validMask;
+  uint8_t errorCount;
+
+  uint32_t channelStartedAt;
+
+  bool initialized;
+  bool fault;
+
+} AD7794_Device;
+
+// Initialize all ADCs
+void AD7794_Init(SPI_HandleTypeDef *spi, const AD7794_ChipSelect *chipSelects,
+                 uint8_t count);
+
+// Nonblocking conversion polling
+void AD7794_Process(void);
+
+// Get latest measurement
+bool AD7794_GetRaw(uint8_t device, uint8_t channel, uint32_t *value);
+
+// Access device state
+const AD7794_Device *AD7794_GetDevice(uint8_t device);
+
+// Obsolete
+// void AD7794_Reset(void);
+// uint8_t AD7794_ReadId(void);
+// void AD7794_WriteConfig(uint16_t config);
+// void AD7794_WriteMode(uint16_t mode);
+// uint32_t AD7794_ReadData(void);
 
 #endif /* AD7794_H */
