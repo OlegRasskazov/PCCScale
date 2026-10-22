@@ -71,7 +71,7 @@ typedef struct{
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-static const uint16_t SizeWeight = 4;
+static const uint16_t SizeWeight = 6;
 static const uint16_t SizeCommand = 16;
 static const uint16_t SizeStatus = 8;
 

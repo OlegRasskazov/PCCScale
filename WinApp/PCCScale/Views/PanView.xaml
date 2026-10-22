@@ -5,7 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:views="clr-namespace:PCCScale.Views"
              mc:Ignorable="d">
-    <Border IsEnabled="{Binding IsConnected}" BorderThickness="1" Padding="2" BorderBrush="Black">
+        <!--IsEnabled="{Binding IsConnected}"-->
+    <Border BorderThickness="1" Padding="2" BorderBrush="Black">
         <Border.Style>
             <Style TargetType="Border">
                 <Setter Property="Background" Value="LightCoral"/>
@@ -31,10 +32,11 @@
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Number, StringFormat=Pan {0}}" FontSize="10" FontWeight="Bold"/>
             <Button Grid.Row="0" Grid.Column="1" Content="Settings" Command="{Binding OpenSettingsDialogCommand}" FontSize="10"/>
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Weight, StringFormat='Curr. weight {0}'}" FontSize="10" FontWeight="Bold"/>
-            <Button Grid.Row="1" Grid.Column="1" Content="Record" Command="{Binding RecordDataCommand}" FontSize="10"/>
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding WeightPercentage, StringFormat='Curr.:{0:F2}%'}" FontSize="10" FontWeight="Bold"/>
-            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PCCslab.TargetWeightPercentage, StringFormat='Target Wt%:{0}'}" FontSize="10" FontWeight="Bold"/>
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding Weight, StringFormat='Scale {0:0.##}'}" FontSize="10" FontWeight="Bold"/>
+            <Button Grid.Row="1" Grid.Column="1" Content="{Binding RecordButtonText}" Command="{Binding ToggleRecordingCommand}" FontSize="10"/>
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding SlabWeight, StringFormat='Slab weight {0:0.##}'}" FontSize="10" FontWeight="Bold"/>
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding SlabWeightPercentage, StringFormat='Curr.:{0:F2}%'}" FontSize="10" FontWeight="Bold"/>
+            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Pcc.TargetWeightPercentage, StringFormat='Target Wt%:{0}'}" FontSize="10" FontWeight="Bold"/>
             <!--<StackPanel Orientation="Horizontal">
                 <TextBlock Text="{Binding Number}" FontSize="12" FontWeight="Bold" Padding="0,0,10,0"/>
                 <TextBlock Text="{Binding Weight}" FontSize="12" FontWeight="Bold" Padding="0,0,10,0"/>

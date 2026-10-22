@@ -7,6 +7,7 @@
         xmlns:local="clr-namespace:PCCScale.Views" 
         xmlns:viewmodels="clr-namespace:PCCScale.ViewModels" 
         d:DataContext="{d:DesignInstance Type=viewmodels:PanSettingsViewModel}"
+        Closing="Window_Closing"
         mc:Ignorable="d"
         Title="Pan Settings" Height="600" Width="400"
         WindowStartupLocation="CenterOwner">
@@ -17,62 +18,77 @@
     <Grid Margin="20">
 
         <StackPanel>
-            <TextBlock Text="{Binding Pan.Number, StringFormat=Pan {0}}" FontSize="12" FontWeight="SemiBold"/>
+            <TextBlock Text="{Binding Pan.Id, StringFormat=Pan {0}}" FontSize="12" FontWeight="SemiBold"/>
             <TextBlock Text="Current reading"/>
             <TextBlock Text="{Binding Pan.Weight}" FontSize="12"/>
 
             <Separator Margin="0,10"/>
             <StackPanel IsEnabled="{Binding IsEditingEnabled}" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <TextBlock Text="PCC block" FontSize="18" FontWeight="SemiBold"/>
-                <ComboBox ItemsSource="{Binding Pan.PCCslabs}"
-                      SelectedItem="{Binding Pan.PccSlab}"
-                      DisplayMemberPath="Name"
-                      Width="100" Margin="10,0,0,0"/>
+                <ComboBox ItemsSource="{Binding Pan.Pccs}"
+                      SelectedItem="{Binding Pan.SelectedPccName}"
+                      Width="150" Margin="10,0,0,0"/>
             </StackPanel>
-            <Grid IsEnabled="{Binding IsEditingEnabled}" Margin="0,10,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="10"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" IsEnabled="{Binding IsEditingEnabled}" Margin="0,10,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="10"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions >
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="5"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="5"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Length" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Pan.PccSlab.Length}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Width" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Pan.PccSlab.Width}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0"  />
-                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Thickness" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Pan.PccSlab.Thickness}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
-                </Grid>
+                    <Grid Grid.Column="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions >
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Length" FontSize="12" FontWeight="Medium"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Pan.Pcc.Length}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Width" FontSize="12" FontWeight="Medium"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Pan.Pcc.Width}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0"  />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Thickness" FontSize="12" FontWeight="Medium"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Pan.Pcc.Thickness}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                    </Grid>
 
-                <Grid Grid.Column="2">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions >
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="5"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="5"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Weight" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Pan.PccSlab.Weight}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Target Wt.%" FontSize="12" FontWeight="Medium"/>
-                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Pan.PccSlab.TargetWeightPercentage}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                    <Grid Grid.Column="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions >
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Weight" FontSize="12" FontWeight="Medium"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Pan.Pcc.Weight}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Target Wt.%" FontSize="12" FontWeight="Medium"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Pan.Pcc.TargetWeightPercentage}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Swelling Coef." FontSize="12" FontWeight="Medium"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Pan.Pcc.SwellingCoefficient}" FontSize="12" FontWeight="Medium" Margin="5,0,0,0" />
+                    </Grid>
+                </Grid>
+                <Grid Grid.Row="1">
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Center">
+                    <TextBlock Text="Note" FontSize="12" FontWeight="Medium"/>
+                    <TextBox Text="{Binding Pan.Pcc.Note}" FontSize="12" FontWeight="Medium"  AcceptsReturn="True" Width="300" TextWrapping="Wrap" Margin="10,0,0,0"/>
+                        
+                    </StackPanel>
                 </Grid>
             </Grid>
+            
             <Separator Margin="0,10"/>
             <Button IsEnabled="{Binding IsEditingEnabled}" Content="Tare" Command="{Binding TareCommand}" Width="100"/>
             <Separator Margin="0,20"/>

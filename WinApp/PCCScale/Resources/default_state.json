@@ -1,0 +1,46 @@
+{
+  "Ovens": [
+    {
+      "Id": 1,
+      "SelectedPCM": "PT37",
+      "Pans": [
+        {
+          "Id": 1,
+          "SelectedPcc": "E2S2 Small Rev.1",
+          "TareWeight": 0,
+          "CountsPerGram": 100
+        },
+        {
+          "Id": 2,
+          "SelectedPcc": "E2S2 Small Rev.1",
+          "TareWeight": 0,
+          "CountsPerGram": 100
+        },
+        {
+          "Id": 3,
+          "SelectedPcc": "E2S2 Small Rev.1",
+          "TareWeight": 0,
+          "CountsPerGram": 100
+        },
+        {
+          "Id": 4,
+          "SelectedPcc": "E2S2 Small Rev.1",
+          "TareWeight": 0,
+          "CountsPerGram": 100
+        },
+        {
+          "Id": 5,
+          "SelectedPcc": "E2S2 Small Rev.1",
+          "TareWeight": 0,
+          "CountsPerGram": 100
+        },
+        {
+          "Id": 6,
+          "SelectedPcc": "E2S2 Small Rev.1",
+          "TareWeight": 0,
+          "CountsPerGram": 100
+        }
+      ]
+    }
+  ]
+}

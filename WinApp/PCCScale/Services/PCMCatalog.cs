@@ -14,7 +14,7 @@ namespace PCCScale.Services
         {
             using var stream = File.OpenRead(_filePath);
 
-            var items = JsonSerializer.Deserialize<List<PCM>>(stream) ?? new List<PCM>();
+            var items = JsonSerializer.Deserialize<List<PCM>>(stream);
             _PCMs.AddRange(items);
         }
 

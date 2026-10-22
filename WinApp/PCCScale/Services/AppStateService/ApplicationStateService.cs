@@ -4,6 +4,7 @@ using System.Text.Json;
 
 public sealed class ApplicationStateService
 {
+    private readonly string _defaultFilePath = Path.Combine(AppContext.BaseDirectory, "Resources", "default_state.json");
     private readonly string _filePath;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
@@ -28,68 +29,72 @@ public sealed class ApplicationStateService
         _state = Load();
     }
 
+    public ApplicationState GetState() => _state;
+
     private ApplicationState Load()
     {
+        ApplicationState state;
+        string json;
         if (!File.Exists(_filePath))
-            return new ApplicationState();
+        {
+            _lock.WaitAsync().Wait();
+            try
+            {
+                using var stream = File.OpenRead(_defaultFilePath);
+                state = JsonSerializer.Deserialize<ApplicationState>(stream) ?? throw new InvalidDataException("Default application state is invalid.");
 
-        string json = File.ReadAllText(_filePath);
+                json = JsonSerializer.Serialize(state, _jsonOptions);
 
-        return JsonSerializer.Deserialize<ApplicationState>(json)
-            ?? throw new InvalidDataException(
-                "Application state is invalid.");
+                string tempPath = _filePath + ".tmp";
+
+                File.WriteAllTextAsync(tempPath, json).Wait();
+
+                File.Move(tempPath, _filePath, overwrite: true);
+            }
+            finally
+            {
+                _lock.Release();
+            }
+
+            return state;
+        }
+
+        json = File.ReadAllText(_filePath);
+        state = JsonSerializer.Deserialize<ApplicationState>(json)
+            ?? throw new InvalidDataException("Application state is invalid.");
+
+        return state;
     }
-    public CalibrationData? GetCalibration(int ovenNumber, int panNumber)
-        => _state.Ovens.First(x => x.Id == ovenNumber).Pans.First(x => x.Id == panNumber).CalibrationData;
 
-    //public CalibrationData? GetCalibration(int ovenNumber, int panNumber)
-    //    => _state.Ovens.First(x => x.OvenNumber == ovenNumber).Pans.First(x => x.PanNumber == panNumber).CalibrationData;
+    public async Task WriteStateAsync()
+    {
+        string tempPath = _filePath + ".tmp";
+        string backupPath = _filePath + ".bak";
 
-    //public async Task SaveCalibrationAsync(
-    //    int ovenNumber,
-    //    int panNumber,
-    //    CalibrationData calibration)
-    //{
-    //    if (!double.IsFinite(calibration.ZeroOffsetCounts) ||
-    //        !double.IsFinite(calibration.CountsPerGram) ||
-    //        calibration.CountsPerGram <= 0 ||
-    //        calibration.Direction is not (1 or -1))
-    //    {
-    //        throw new ArgumentException(
-    //            "Invalid calibration data.",
-    //            nameof(calibration));
-    //    }
+        byte[] json = JsonSerializer.SerializeToUtf8Bytes(
+            _state,
+            _jsonOptions);
 
-    //    await _lock.WaitAsync();
+        await using (var stream = new FileStream(
+            tempPath,
+            FileMode.Create,
+            FileAccess.Write,
+            FileShare.None,
+            bufferSize: 4096,
+            options: FileOptions.Asynchronous))
+        {
+            await stream.WriteAsync(json);
+            await stream.FlushAsync();
+            stream.Flush(flushToDisk: true);
+        }
 
-    //    try
-    //    {
-    //        string json = JsonSerializer.Serialize(
-    //            _state, _jsonOptions);
-    //        var next = JsonSerializer.Deserialize<ApplicationState>(json, _jsonOptions);
-    //        next.
-
-    //        next.Calibrations[key] = calibration;
-
-    //        string json = JsonSerializer.Serialize(
-    //            next, _jsonOptions);
-
-    //        string tempPath = _filePath + ".tmp";
-
-    //        await File.WriteAllTextAsync(tempPath, json);
-
-    //        File.Move(
-    //            tempPath,
-    //            _filePath,
-    //            overwrite: true);
-
-    //        // Commit in-memory state only after file save.
-    //        _state = next;
-    //    }
-    //    finally
-    //    {
-    //        _lock.Release();
-    //    }
-    //}
-    //private CalibrationData GetCalibrationData
+        if (File.Exists(_filePath))
+        {
+            File.Replace(tempPath, _filePath, backupPath);
+        }
+        else
+        {
+            File.Move(tempPath, _filePath);
+        }
+    }
 }

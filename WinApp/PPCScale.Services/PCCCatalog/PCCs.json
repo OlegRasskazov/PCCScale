@@ -1,0 +1,32 @@
+[
+  {
+    "PartNumber": "E2S2S-01S",
+    "Name": "E2S2 Small Rev.1",
+    "Length": 259.5,
+    "Width": 359.2,
+    "Thickness": 12.65,
+    "Weight": 345,
+    "SwellingCoefficient": 0.05,
+    "TargetWeightPercentage": 60
+  },
+  {
+    "PartNumber": "E2S2L-01S",
+    "Name": "E2S2 Large Rev.1",
+    "Length": 259.5,
+    "Width": 391.2,
+    "Thickness": 12.65,
+    "Weight": 345,
+    "SwellingCoefficient": 0.05,
+    "TargetWeightPercentage": 60
+  },
+  {
+    "PartNumber": "",
+    "Name": "Undefined",
+    "Length": 1,
+    "Width": 1,
+    "Thickness": 1,
+    "Weight": 100,
+    "SwellingCoefficient": 0,
+    "TargetWeightPercentage": 1
+  }
+]

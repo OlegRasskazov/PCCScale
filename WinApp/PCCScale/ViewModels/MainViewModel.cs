@@ -11,15 +11,18 @@ namespace PCCScale.ViewModels
         private BleConnectionStateEnum _connectionState = BleConnectionStateEnum.Disconnected;
         public ObservableCollection<OvenViewModel> Ovens { get; }
 
-        public MainViewModel(BLEService bleService, OvenViewModelFactory ovenViewModelFactory)
+        public MainViewModel(ApplicationStateService applicationStateService, BLEService bleService, OvenViewModelFactory ovenViewModelFactory)
         {
             bleService.ConnectionStateChanged += ConnectionStateChangedHandler;
-            Ovens = new ObservableCollection<OvenViewModel>
+            var _applicationState = applicationStateService.GetState();
+            
+            Ovens = new ObservableCollection<OvenViewModel>();
+
+            foreach (var ovenState in _applicationState.Ovens)
             {
-                ovenViewModelFactory.Create(1),
-                ovenViewModelFactory.Create(2),
-                ovenViewModelFactory.Create(3),
-            };
+                var ovenViewModel = ovenViewModelFactory.Create(ovenState.Id);
+                Ovens.Add(ovenViewModel);
+            }
             bleService.Connect();
         }
         private void ConnectionStateChangedHandler(BleConnectionStateEnum state) => ConnectionState = state;

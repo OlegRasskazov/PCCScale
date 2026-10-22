@@ -8,7 +8,8 @@
         xmlns:views="clr-namespace:PCCScale.Views"
         xmlns:local="clr-namespace:PCCScale"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="1000">
+        Closing="Window_Closing"
+        Title="MainWindow" Width="1000" Height="800">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -101,7 +102,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <views:OvenView
-                            Width="200"
+                            Width="250"
                             Margin="5"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

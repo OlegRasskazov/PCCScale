@@ -25,7 +25,7 @@ namespace PCCScale.ViewModels
         private async Task CalibrateAsync()
         {
             CalibrationState = CalibrationStateEnum.ZeroCalibrating;
-            Pan.OnPanWeghtValueUpdated += OnPanWeghtValueUpdated;
+            Pan.OnPanWeightValueChanged += OnPanWeghtValueChangedHandler;
         }
         private async Task ContinueCalibrationAsync() => CalibrationState = CalibrationStateEnum.ReferenceWeightCalibrating;
 
@@ -48,23 +48,23 @@ namespace PCCScale.ViewModels
         public PanSettingsViewModel(PanViewModel pan)
         {
             Pan = pan;
-            _calibrationState = pan.LcCountSize == 0 ? CalibrationStateEnum.None : CalibrationStateEnum.ReferenceWeighCalibrationtReady;
+            _calibrationState = pan.CountsPerGram == 0 ? CalibrationStateEnum.None : CalibrationStateEnum.ReferenceWeighCalibrationtReady;
         }
 
-        private void OnPanWeghtValueUpdated(int weight)
+        private void OnPanWeghtValueChangedHandler(int weight)
         {
             switch (CalibrationState)
             {
                 case CalibrationStateEnum.ZeroCalibrating:
                     ZeroADCWeightsList.Add(weight);
-                    if (ZeroADCWeightsList.Count > 30) CalibrationState = CalibrationStateEnum.ZeroCalibrationReady;
+                    if (ZeroADCWeightsList.Count > 10) CalibrationState = CalibrationStateEnum.ZeroCalibrationReady;
                     break;
                 case CalibrationStateEnum.ReferenceWeightCalibrating:
                     ReferenceADCWeightsList.Add(weight);
-                    if (ReferenceADCWeightsList.Count > 30)
+                    if (ReferenceADCWeightsList.Count > 10)
                     {
-                        Pan.OnPanWeghtValueUpdated -= OnPanWeghtValueUpdated;
-                        Pan.LcCountSize = (ZeroADCWeightsList.Average() - ReferenceADCWeightsList.Average()) / ReferenceWeight;
+                        Pan.OnPanWeightValueChanged -= OnPanWeghtValueChangedHandler;
+                        Pan.CountsPerGram = (ZeroADCWeightsList.Average() - ReferenceADCWeightsList.Average()) / ReferenceWeight;
                         ZeroADCWeightsList.Clear();
                         ReferenceADCWeightsList.Clear();
                         ReferenceWeight = 0;
@@ -78,6 +78,11 @@ namespace PCCScale.ViewModels
         private int _referenceWeight;
         private List<int> ZeroADCWeightsList = new();
         private List<int> ReferenceADCWeightsList = new();
+
+        public void UpdateState()
+        {
+            Pan.UpdatePanStateData();
+        }
     }
     internal enum CalibrationStateEnum
     {

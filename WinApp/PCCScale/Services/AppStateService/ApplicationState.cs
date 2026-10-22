@@ -2,26 +2,19 @@
 {
     public class ApplicationState
     {
-        public List<OvenData> Ovens = new();
+        public List<OvenStateData> Ovens { get; init; } = new();
     }
-    public class CalibrationData
+    public class OvenStateData
     {
-        public double ZeroOffsetCounts { get; set; }
+        public int Id { get; init; }
+        public string SelectedPcm { get; set; } = string.Empty;
+        public List<PanStateData> Pans { get; init; } = new();
+    }
+    public class PanStateData
+    {
+        public int Id { get; init; }
+        public string SelectedPcc { get; set; } = string.Empty;
+        public int TareWeight { get; set; }
         public double CountsPerGram { get; set; }
-        public int Direction { get; set; }
-        public DateTime CalibratedAtUtc { get; set; }
-    }
-    public class OvenData
-    {
-        public int Id { get; set; }
-        public string PCM { get; set; } = string.Empty;
-        public List<PanData> Pans { get; set; } = new();
-    }
-    public class PanData
-    {
-        public int Id { get; set; }
-        public string SelectedPccSlab { get; set; } = string.Empty;
-        public CalibrationData CalibrationData { get; set; } = new();
-
     }
 }

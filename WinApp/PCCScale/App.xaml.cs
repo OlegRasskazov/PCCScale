@@ -2,10 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using PCCScale.Services;
 using PCCScale.Services.BleService;
+using PCCScale.Services.PCCSlabCatalog;
 using PCCScale.ViewModels;
 using PCCScale.ViewModels.Factories;
-using System.Configuration;
-using System.Data;
 using System.Windows;
 
 namespace PCCScale
@@ -38,6 +37,7 @@ namespace PCCScale
             services.AddSingleton<PanSettingsDialogService>();
 
             services.AddSingleton<ApplicationStateService>();
+            services.AddSingleton<RecordingService>();
             services.AddSingleton<BLEService>();
             services.AddSingleton<PCMCatalog>();
             services.AddSingleton<PCCCatalog>();

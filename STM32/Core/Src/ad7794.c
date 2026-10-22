@@ -1,6 +1,7 @@
 #include "ad7794.h"
 #include "gpio.h"
 #include "spi.h"
+#include <stdint.h>
 #include <string.h>
 
 #define AD7794_REG_STATUS_READ 0x40U
@@ -8,6 +9,8 @@
 #define AD7794_REG_DATA_READ 0x58U
 #define AD7794_REG_CONFIG_WRITE 0x10U
 #define AD7794_REG_MODE_WRITE 0x08U
+
+#define AD7794_ALL_CHANNELS_MASK 0x3FU
 
 static SPI_HandleTypeDef *adcSpi;
 
@@ -97,11 +100,14 @@ static bool WriteRegister16(AD7794_Device *dev, uint8_t command,
 // Channel selection
 // --------------------------------------------------
 
-static bool SetChannel(AD7794_Device *dev, uint8_t channel) {
+static bool SetChannel(AD7794_Device *dev, uint8_t channel, bool burnout) {
   if (channel >= AD7794_CHANNEL_COUNT)
     return false;
 
   uint16_t config = AD7794_CFG_GAIN_128 | AD7794_CFG_BUFFER_ON | channel;
+
+  if (burnout)
+    config |= AD7794_CFG_BURNOUT_ON;
 
   if (!WriteRegister16(dev, AD7794_REG_CONFIG_WRITE, config))
     return false;
@@ -110,6 +116,52 @@ static bool SetChannel(AD7794_Device *dev, uint8_t channel) {
   dev->channelStartedAt = HAL_GetTick();
 
   return true;
+}
+
+static int8_t GetNextActiveChannel(const AD7794_Device *dev,
+                                   uint8_t currentChannel) {
+  uint8_t activeMask =
+      dev->diagnosticDoneMask & (uint8_t)~dev->suspectedOpenMask;
+
+  if (activeMask == 0)
+    return -1;
+
+  for (uint8_t offset = 1; offset <= AD7794_CHANNEL_COUNT; offset++) {
+    uint8_t channel = (currentChannel + offset) % AD7794_CHANNEL_COUNT;
+
+    if (activeMask & (1U << channel))
+      return (int8_t)channel;
+  }
+
+  return -1;
+}
+
+static int8_t GetNextChannel(const AD7794_Device *dev, uint8_t currentChannel) {
+  // Initial diagnostics not completed yet
+  if (dev->diagnosticDoneMask != AD7794_ALL_CHANNELS_MASK) {
+    return (int8_t)((currentChannel + 1U) % AD7794_CHANNEL_COUNT);
+  }
+
+  return GetNextActiveChannel(dev, currentChannel);
+}
+
+static bool AdvanceChannel(AD7794_Device *dev) {
+  int8_t next = GetNextChannel(dev, dev->currentChannel);
+
+  if (next < 0) {
+    // No connected load cells detected.
+    // This is not a hardware ADC fault.
+    dev->initialized = false;
+    return true;
+  }
+
+  uint8_t nextChannel = (uint8_t)next;
+
+  bool needsDiagnostic = !(dev->diagnosticDoneMask & (1U << nextChannel));
+
+  dev->phase = needsDiagnostic ? AD7794_PHASE_BURNOUT : AD7794_PHASE_NORMAL;
+
+  return SetChannel(dev, nextChannel, needsDiagnostic);
 }
 
 // --------------------------------------------------
@@ -157,14 +209,18 @@ void AD7794_Init(SPI_HandleTypeDef *spi, const AD7794_ChipSelect *chipSelects,
       continue;
     }
 
-    if (!SetChannel(dev, 0)) {
+    uint16_t mode = AD7794_MODE_CONTINUOUS | AD7794_MODE_RATE_19_6HZ;
+
+    if (!WriteRegister16(dev, AD7794_REG_MODE_WRITE, mode)) {
       dev->fault = true;
       continue;
     }
 
-    uint16_t mode = AD7794_MODE_CONTINUOUS | AD7794_MODE_RATE_19_6HZ;
+    dev->phase = AD7794_PHASE_BURNOUT;
+    dev->diagnosticDoneMask = 0;
+    dev->suspectedOpenMask = 0;
 
-    if (!WriteRegister16(dev, AD7794_REG_MODE_WRITE, mode)) {
+    if (!SetChannel(dev, 0, true)) {
       dev->fault = true;
       continue;
     }
@@ -187,13 +243,23 @@ void AD7794_Process(void) {
     if (!dev->initialized || dev->fault)
       continue;
 
+    uint8_t channel = dev->currentChannel;
+    uint8_t mask = (uint8_t)(1U << channel);
+
+    // -----------------------------------------
+    // Conversion timeout
+    // -----------------------------------------
+
     uint32_t elapsed = now - dev->channelStartedAt;
 
-    // Conversion timeout
     // if (elapsed > AD7794_TIMEOUT_MS) {
     //   dev->fault = true;
     //   continue;
     // }
+
+    // -----------------------------------------
+    // Read ADC status
+    // -----------------------------------------
 
     uint8_t status;
 
@@ -206,20 +272,21 @@ void AD7794_Process(void) {
     if (status & AD7794_STATUS_RDY)
       continue;
 
-    // ADC reported a conversion/reference error
-    if (status & (AD7794_STATUS_ERR | AD7794_STATUS_NOXREF)) {
+    // Reference voltage error
+    if (status & AD7794_STATUS_NOXREF) {
       dev->fault = true;
       continue;
     }
 
-    uint8_t channel = dev->currentChannel;
-
-    // Check that the result belongs
-    // to the channel currently selected.
+    // Verify channel number
     if ((status & AD7794_STATUS_CH_MASK) != channel) {
       dev->fault = true;
       continue;
     }
+
+    // -----------------------------------------
+    // Read ADC data
+    // -----------------------------------------
 
     uint32_t raw;
 
@@ -228,18 +295,66 @@ void AD7794_Process(void) {
       continue;
     }
 
-    // Store the measurement
-    dev->raw[channel] = raw;
-    dev->updatedAt[channel] = HAL_GetTick();
-    dev->validMask |= (uint8_t)(1U << channel);
+    // -----------------------------------------
+    // BURNOUT DIAGNOSTICS
+    // -----------------------------------------
 
-    // Move to the next AIN channel
-    uint8_t nextChannel = (uint8_t)((channel + 1U) % AD7794_CHANNEL_COUNT);
+    if (dev->phase == AD7794_PHASE_BURNOUT) {
+      dev->burnoutRaw[channel] = raw;
+      dev->burnoutStatus[channel] = status;
 
-    if (!SetChannel(dev, nextChannel)) {
-      dev->fault = true;
+      dev->diagnosticDoneMask |= mask;
+
+      // Saturation indicates possible open circuit
+      if ((status & AD7794_STATUS_ERR) || raw <= AD7794_BURNOUT_LOW ||
+          raw >= AD7794_BURNOUT_HIGH) {
+        dev->suspectedOpenMask |= mask;
+      } else {
+        dev->suspectedOpenMask &= (uint8_t)~mask;
+      }
+
+      // Disable burnout and measure normally
+      dev->phase = AD7794_PHASE_NORMAL;
+
+      if (!SetChannel(dev, channel, false))
+        dev->fault = true;
+
       continue;
     }
+
+    // -----------------------------------------
+    // NORMAL MEASUREMENT
+    // -----------------------------------------
+
+    dev->normalStatus[channel] = status;
+
+    if (status & AD7794_STATUS_ERR) {
+      // Error affects only this AIN channel
+      dev->channelFaultMask |= mask;
+
+      // Invalidate previous measurement
+      dev->validMask &= (uint8_t)~mask;
+
+      // Continue with another channel
+      if (!AdvanceChannel(dev))
+        dev->fault = true;
+
+      continue;
+    }
+
+    // Successful measurement
+    dev->channelFaultMask &= (uint8_t)~mask;
+
+    dev->raw[channel] = raw;
+    dev->updatedAt[channel] = HAL_GetTick();
+    dev->validMask |= mask;
+
+    // -----------------------------------------
+    // SELECT NEXT CHANNEL
+    // -----------------------------------------
+
+    if (!AdvanceChannel(dev))
+      dev->fault = true;
   }
 }
 

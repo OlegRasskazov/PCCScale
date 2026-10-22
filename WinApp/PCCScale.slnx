@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="PCCScale/PCCScale.csproj" />
+  <Project Path="PPCScale.Services/PPCScale.Services.csproj" Id="80e427c5-cb78-429a-8c3b-c1adaadc324e" />
 </Solution>

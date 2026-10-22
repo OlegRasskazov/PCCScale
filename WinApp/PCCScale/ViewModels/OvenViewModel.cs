@@ -12,27 +12,27 @@ namespace PCCScale.ViewModels
         [ObservableProperty]
         private double _currentTemp;
 
-        public int Number { get; }
+        public int Id { get; }
         public ObservableCollection<PCM> PCMs { get; }
         public PCM PCM { get; set; }
         public ObservableCollection<PanViewModel> Pans { get; }
 
-        public OvenViewModel(int number, IServiceProvider services)
+        public OvenViewModel(int id, IServiceProvider services)
         {
             var pcmCatalog = services.GetRequiredService<PCMCatalog>();
             var panViewModelFactory = services.GetRequiredService<PanViewModelFactory>();
-            Pans = new ObservableCollection<PanViewModel>()
-            {
-                panViewModelFactory.Create(1, this),
-                panViewModelFactory.Create(2, this),
-                panViewModelFactory.Create(3, this),
-                panViewModelFactory.Create(4, this),
-                panViewModelFactory.Create(5, this),
-                panViewModelFactory.Create(6, this)
-            };
-            Number = number;
+            var _applicationState = services.GetRequiredService<ApplicationStateService>().GetState();
+
+            Id = id;
             PCMs = new ObservableCollection<PCM>(pcmCatalog.PCMs);
             PCM = PCMs.FirstOrDefault() ?? throw new ArgumentException("No PCM available", nameof(PCMs));
+
+            Pans = new ObservableCollection<PanViewModel>();
+            foreach (var panState in _applicationState.Ovens.FirstOrDefault(o => o.Id == id)?.Pans ?? new List<Services.AppStateService.PanStateData>())
+            {
+                var panViewModel = panViewModelFactory.Create(panState.Id, panState, this);
+                Pans.Add(panViewModel);
+            }
         }
 
     }

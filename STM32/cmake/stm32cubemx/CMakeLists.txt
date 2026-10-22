@@ -83,8 +83,6 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/stm32wbaxx_hal_msp.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/sysmem.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/syscalls.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/ad7794.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/Src/ble_notify.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../startup_stm32wba65xx.s
 )
 
@@ -187,10 +185,7 @@ set(MX_LINK_LIBS
  "-Wl,--end-group"
     STM32_Drivers
     ${TOOLCHAIN_LINK_LIBRARIES}
-    Utilities
-	STM32_WPAN
-	Common
-	
+    Utilities	STM32_WPAN	Common	
 )
 # Interface library for includes and symbols
 add_library(stm32cubemx INTERFACE)

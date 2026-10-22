@@ -79,6 +79,9 @@
 #define AD7794_CFG_BURNOUT_OFF 0x0000
 #define AD7794_CFG_BURNOUT_ON 0x2000
 
+#define AD7794_BURNOUT_LOW 0x000100UL
+#define AD7794_BURNOUT_HIGH 0xFFFEFFUL
+
 // ------------------------------------------------------------
 // BIAS VOLTAGE GENERATOR (bits 15:14)
 // ------------------------------------------------------------
@@ -183,6 +186,11 @@
   (AD7794_MODE_CONTINUOUS | AD7794_MODE_CHOP_ON | AD7794_MODE_CLK_INTERNAL |   \
    AD7794_MODE_RATE_16_7HZ_60)
 
+typedef enum { 
+  AD7794_PHASE_BURNOUT,
+  AD7794_PHASE_NORMAL 
+} AD7794_Phase;
+
 typedef struct {
   GPIO_TypeDef *port;
   uint16_t pin;
@@ -194,6 +202,16 @@ typedef struct {
   uint8_t currentChannel;
   uint8_t id;
 
+  AD7794_Phase phase;
+
+  uint8_t diagnosticDoneMask;
+  uint8_t suspectedOpenMask;
+  uint8_t channelFaultMask;
+
+  uint8_t burnoutStatus[AD7794_CHANNEL_COUNT];
+  uint8_t normalStatus[AD7794_CHANNEL_COUNT];
+  uint32_t burnoutRaw[AD7794_CHANNEL_COUNT];
+  
   uint32_t raw[AD7794_CHANNEL_COUNT];
   uint32_t updatedAt[AD7794_CHANNEL_COUNT];
 

@@ -2,15 +2,9 @@
 {
     public class PCM
     {
-        public string Name { get; }
-        public int Density { get; }
-        public int SensibleHeat { get; } = 0;
-        public int LatentHeat { get; } = 0;
-
-        public PCM(string name, int density)
-        {
-            Name = name;
-            Density = density;
-        }
+        public string Name { get; init; } = string.Empty;
+        public int Density { get; init; }
+        public int SensibleHeat { get;init; }
+        public int LatentHeat { get; init; }
     }
 }

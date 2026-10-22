@@ -25,7 +25,7 @@
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Number, StringFormat=Oven {0}}" FontSize="12" FontWeight="Bold"/>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Id, StringFormat=Oven {0}}" FontSize="12" FontWeight="Bold"/>
                 <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding PCMs}" SelectedItem="{Binding PCM}" DisplayMemberPath="Name" FontSize="12" FontWeight="Bold"/>
                 <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
                     <Grid.ColumnDefinitions>
@@ -40,7 +40,7 @@
                 </Grid>
             </Grid>
 
-            <ItemsControl Grid.Row="1"  ItemsSource="{Binding Pans}" Margin="0,5,0,0">
+            <ItemsControl Grid.Row="1"  ItemsSource="{Binding Pans}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <views:PanView Margin="0,5,0,5"/>
